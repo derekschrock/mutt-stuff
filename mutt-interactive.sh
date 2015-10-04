@@ -4,10 +4,9 @@
 
 cat << EOF >&2
 1 - Mark all message as read
-
 EOF
 
-printf "Action: " >&2
+printf "\nAction: " >&2
 read input
 
 case "$input" in
