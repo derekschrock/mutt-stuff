@@ -1,4 +1,6 @@
 BEGIN {
+	sig_check = 1
+
 	_threshold = 3
 	if(!threshold) {
 		threshold = _threshold
@@ -8,14 +10,73 @@ BEGIN {
 
 	quote_line = "> quoted block removed by display filter\n"
 	len_ql = length(quote_line)
+	headers = 1
+}
+
+headers {
+	if(/^[a-zA-Z-]+: /) {
+		headers = 1
+	}
+
+	if(/^From: Robert Elz <kre@munnari.OZ.AU>$/) {
+		elz_undo = 1
+	}
+
+	if(/^$/) {
+		headers = 0
+	}
+}
+
+/^\033\][0-9]+;[0-9]+\007\[-- Autoview using elinks/ {
+	elinksing = 1
+	next
+}
+
+elz_undo {
+	if(! headers && /^[[:space:]]+[a-zA-Z-]+:/) {
+		next
+	}
+
+	if(/^[[:space:]]+| >/) {
+		sub(/^[[:space:]]+\| ?/, "> ")
+	}
+}
+
+elinksing && /^([[:space:]]+\*)+$/ {
+	next
+}
+
+sig_check {
+	if(/^\033\][0-9]+;[0-9]+\007\[-- Begin signature information --\]$/) {
+		sig_block = 1
+		signed = 1
+	}
+
+	if(sig_block) {
+		if(/^Problem signature from:/) {
+			sub(/.*: /, "", $0)
+			key_name = $0
+		}
+
+		if(/^\033\][0-9]+;[0-9]+\007\[-- End signature information --\]$/) {
+			sig_block = 0
+			getline
+			getline
+		}
+		next
+	}
+}
+
+signed && !headers && /^\033\][0-9]+;[0-9]+\007\Subject: / {
+	next
 }
 
 { p = 1 }
 
-/^[[:space:]]*[>|]/ {
+/^[[:space:]]*[>]/ {
 	match($0, /^[[:space:]]*/)
 	if(RLENGTH < 4 ) {
-		if( $0 ~ /^[[:space:]]*[>|][[:space:]]*$/ ) {
+		if( $0 ~ /^[[:space:]]*[>][[:space:]]*$/ ) {
 			next
 		}
 		padding = RLENGTH
