@@ -42,7 +42,7 @@ elz_undo {
 	}
 }
 
-elinksing && /^([[:space:]]+\*)+$/ {
+elinksing && /^\*?([[:space:]]+\*+)+$/ {
 	next
 }
 
