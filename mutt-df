@@ -11,6 +11,16 @@ BEGIN {
 	quote_line = "> quoted block removed by display filter\n"
 	len_ql = length(quote_line)
 	headers = 1
+
+	if(vim_edit) {
+		headers = 0
+		threshold = 99999
+		getline
+		if(/^On / && /Robert Elz wrote:$/) {
+			elz_undo = 1
+		}
+		print
+	}
 }
 
 headers {
